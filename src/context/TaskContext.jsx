@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-
+//taskContext
 const initialData = {
   tasks: {
     "task-1": {
@@ -16,56 +16,24 @@ const initialData = {
       description: "Toggle Dark/Light mode from the Top Navbar.",
       priority: "Medium",
       dueDate: new Date(Date.now() + 86400000).toISOString(),
-      tags: ["settings", "ui"]
-    },
-    "task-3": {
-      id: "task-3",
-      title: "Design System Implementation",
-      description: "Create a scalable design system using Tailwind CSS, glassmorphism UI, and Framer Motion for animations.",
-      priority: "High",
-      dueDate: new Date(Date.now() + 172800000).toISOString(),
-      tags: ["design", "frontend", "css"]
-    },
-    "task-4": {
-      id: "task-4",
-      title: "Fix Authentication Flow",
-      description: "Resolve the race condition during JWT token refresh where users get logged out unexpectedly.",
-      priority: "Urgent",
-      dueDate: new Date(Date.now() - 3600000).toISOString(), // Overdue
-      tags: ["bug", "auth"]
-    },
-    "task-5": {
-      id: "task-5",
-      title: "Setup CI/CD Pipeline",
-      description: "Configure GitHub Actions to automatically run tests and deploy to Vercel on push to the main branch.",
-      priority: "Medium",
-      dueDate: new Date(Date.now() - 86400000 * 2).toISOString(),
-      tags: ["devops", "infrastructure"]
-    },
-    "task-6": {
-      id: "task-6",
-      title: "User Research Interviews",
-      description: "Conduct 30-minute interviews with power users to understand their workflow and pain points.",
-      priority: "Low",
-      dueDate: new Date(Date.now() + 86400000 * 5).toISOString(),
-      tags: ["research", "product"]
+      tags: ["settings"]
     }
   },
   columns: {
     todo: {
       id: "todo",
       title: "To Do",
-      taskIds: ["task-1", "task-2", "task-6"],
+      taskIds: ["task-1", "task-2"],
     },
     "in-progress": {
       id: "in-progress",
       title: "In Progress",
-      taskIds: ["task-3", "task-4"],
+      taskIds: [],
     },
     completed: {
       id: "completed",
       title: "Done",
-      taskIds: ["task-5"],
+      taskIds: [],
     },
   },
   columnOrder: ["todo", "in-progress", "completed"],

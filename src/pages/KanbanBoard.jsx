@@ -3,11 +3,11 @@ import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { useTasks } from "../context/TaskContext";
 import TaskCard from "../components/TaskCard";
 import TaskModal from "../components/TaskModal";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCcw } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function KanbanBoard() {
-  const { data, moveTask, addTask, updateTask } = useTasks();
+  const { data, moveTask, addTask, updateTask, resetData } = useTasks();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
 
@@ -67,13 +67,23 @@ export default function KanbanBoard() {
             Kanban Board
           </h1>
         </div>
-        <button
-          onClick={handleOpenNew}
-          className="flex items-center space-x-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all hover:-translate-y-0.5 font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          <span>New Task</span>
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={resetData}
+            title="Reset to initial sample data"
+            className="flex items-center space-x-2 bg-black/5 dark:bg-white/5 border border-white/10 text-foreground px-4 py-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-all font-medium"
+          >
+            <RefreshCcw className="w-4 h-4" />
+            <span className="hidden sm:inline">Reset Data</span>
+          </button>
+          <button
+            onClick={handleOpenNew}
+            className="flex items-center space-x-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all hover:-translate-y-0.5 font-medium"
+          >
+            <Plus className="w-5 h-5" />
+            <span>New Task</span>
+          </button>
+        </div>
       </div>
 
       <DragDropContext onDragEnd={onDragEnd}>

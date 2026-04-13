@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }) {
@@ -8,6 +8,10 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
   const [priority, setPriority] = useState("Medium");
   const [dueDate, setDueDate] = useState("");
   const [tags, setTags] = useState("");
+  const [coverImage, setCoverImage] = useState("");
+  const [subtasks, setSubtasks] = useState([]);
+  const [newSubtask, setNewSubtask] = useState("");
+  const [assignee, setAssignee] = useState(null);
 
   useEffect(() => {
     if (taskToEdit) {
@@ -16,12 +20,19 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
       setPriority(taskToEdit.priority);
       setDueDate(taskToEdit.dueDate ? taskToEdit.dueDate.split("T")[0] : "");
       setTags(taskToEdit.tags ? taskToEdit.tags.join(", ") : "");
+      setCoverImage(taskToEdit.coverImage || "");
+      setSubtasks(taskToEdit.subtasks || []);
+      setAssignee(taskToEdit.assignee || null);
     } else {
       setTitle("");
       setDescription("");
       setPriority("Medium");
       setDueDate("");
       setTags("");
+      setCoverImage("");
+      setSubtasks([]);
+      setAssignee(null);
+      setNewSubtask("");
     }
   }, [taskToEdit, isOpen]);
 
@@ -40,6 +51,9 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
       priority,
       dueDate: formattedDate,
       tags: tagArray,
+      coverImage,
+      subtasks,
+      assignee
     });
     onClose();
   };
@@ -60,13 +74,14 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="glass-card w-full max-w-md p-6 rounded-2xl pointer-events-auto shadow-2xl border border-white/20 dark:border-white/10"
+              className="glass-card w-full max-w-lg p-6 rounded-2xl pointer-events-auto shadow-2xl border border-white/20 dark:border-white/10 max-h-[90vh] overflow-y-auto custom-scrollbar"
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
                   {taskToEdit ? "Edit Task" : "New Task"}
                 </h2>
                 <button
+                  type="button"
                   onClick={onClose}
                   className="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground"
                 >
@@ -90,7 +105,7 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
                 <div>
                   <label className="block text-sm font-medium mb-1 text-muted-foreground">Description</label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="w-full bg-black/5 dark:bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
@@ -109,6 +124,7 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
                       <option className="bg-background text-foreground" value="Low">Low</option>
                       <option className="bg-background text-foreground" value="Medium">Medium</option>
                       <option className="bg-background text-foreground" value="High">High</option>
+                      <option className="bg-background text-foreground" value="Urgent">Urgent</option>
                     </select>
                   </div>
                   <div>
@@ -122,18 +138,92 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-muted-foreground">Tags (comma separated)</label>
-                  <input
-                    type="text"
-                    value={tags}
-                    onChange={(e) => setTags(e.target.value)}
-                    className="w-full bg-black/5 dark:bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                    placeholder="e.g. frontend, setup"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-muted-foreground">Tags (comma separated)</label>
+                    <input
+                      type="text"
+                      value={tags}
+                      onChange={(e) => setTags(e.target.value)}
+                      className="w-full bg-black/5 dark:bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      placeholder="e.g. ui, devops"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-muted-foreground">Cover Image URL</label>
+                    <input
+                      type="url"
+                      value={coverImage}
+                      onChange={(e) => setCoverImage(e.target.value)}
+                      className="w-full bg-black/5 dark:bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      placeholder="https://images.unsplash.com/..."
+                    />
+                  </div>
                 </div>
 
-                <div className="pt-4 flex justify-end space-x-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-muted-foreground">Subtasks</label>
+                  {subtasks.length > 0 && (
+                    <div className="space-y-2 mb-2 max-h-32 overflow-y-auto custom-scrollbar">
+                      {subtasks.map((st, idx) => (
+                        <div key={st.id || idx} className="flex items-center space-x-2 bg-black/5 dark:bg-white/5 px-2 py-1.5 rounded-md border border-white/5">
+                          <input 
+                            type="checkbox"
+                            checked={st.completed}
+                            onChange={(e) => {
+                              const newSt = [...subtasks];
+                              newSt[idx].completed = e.target.checked;
+                              setSubtasks(newSt);
+                            }}
+                            className="rounded text-primary focus:ring-primary/50 bg-black/10 dark:bg-white/10 border-white/20 w-4 h-4 cursor-pointer accent-primary"
+                          />
+                          <span className={`text-sm flex-1 ${st.completed ? 'line-through text-muted-foreground opacity-50' : 'text-foreground'}`}>
+                            {st.title}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setSubtasks(subtasks.filter((_, i) => i !== idx))}
+                            className="text-destructive/70 hover:text-destructive hover:bg-destructive/10 p-1.5 rounded-md transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={newSubtask}
+                      onChange={(e) => setNewSubtask(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newSubtask.trim()) {
+                            setSubtasks([...subtasks, { id: `st-${Date.now()}`, title: newSubtask.trim(), completed: false }]);
+                            setNewSubtask("");
+                          }
+                        }
+                      }}
+                      className="flex-1 bg-black/5 dark:bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      placeholder="Add subtask (press Enter)"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newSubtask.trim()) {
+                          setSubtasks([...subtasks, { id: `st-${Date.now()}`, title: newSubtask.trim(), completed: false }]);
+                          setNewSubtask("");
+                        }
+                      }}
+                      className="bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 px-3 py-2 rounded-lg transition-colors border border-white/5 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end space-x-3 mt-4 border-t border-black/5 dark:border-white/5 pt-4">
                   <button
                     type="button"
                     onClick={onClose}
@@ -143,7 +233,7 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-lg font-medium bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5"
+                    className="px-5 py-2 rounded-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5 active:translate-y-0"
                   >
                     {taskToEdit ? "Save Changes" : "Create Task"}
                   </button>
