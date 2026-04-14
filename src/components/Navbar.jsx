@@ -1,8 +1,11 @@
 import { Search, Bell, Sun, Moon, Menu } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
 
   return (
     <header className="h-16 border-b border-white/10 glass px-6 flex items-center justify-between sticky top-0 z-30">
@@ -34,9 +37,9 @@ export default function Navbar() {
           <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full" />
         </button>
 
-        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-accent border-2 border-white/20 overflow-hidden cursor-pointer shadow-md">
-          <img src={`https://ui-avatars.com/api/?name=User&background=random`} alt="User" />
-        </div>
+        <Link to="/settings" className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-accent border-2 border-white/20 overflow-hidden cursor-pointer shadow-md hover:scale-105 transition-transform">
+          <img src={`https://ui-avatars.com/api/?name=${user?.email || "User"}&background=random`} alt="User" />
+        </Link>
       </div>
     </header>
   );

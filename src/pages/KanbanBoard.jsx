@@ -7,9 +7,20 @@ import { Plus, RefreshCcw } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function KanbanBoard() {
-  const { data, moveTask, addTask, updateTask, resetData } = useTasks();
+  const { data, isLoading, moveTask, addTask, updateTask, deleteTask } = useTasks();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
+
+  if (isLoading || !data) {
+    return (
+      <div className="h-full flex items-center justify-center p-8">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+          <span className="text-muted-foreground font-medium">Loading your board...</span>
+        </div>
+      </div>
+    );
+  }
 
   const onDragEnd = (result) => {
     const { destination, source, draggableId } = result;
@@ -69,14 +80,6 @@ export default function KanbanBoard() {
         </div>
         <div className="flex space-x-3">
           <button
-            onClick={resetData}
-            title="Reset to initial sample data"
-            className="flex items-center space-x-2 bg-black/5 dark:bg-white/5 border border-white/10 text-foreground px-4 py-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-all font-medium"
-          >
-            <RefreshCcw className="w-4 h-4" />
-            <span className="hidden sm:inline">Reset Data</span>
-          </button>
-          <button
             onClick={handleOpenNew}
             className="flex items-center space-x-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all hover:-translate-y-0.5 font-medium"
           >
@@ -88,9 +91,10 @@ export default function KanbanBoard() {
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex flex-1 gap-6 overflow-x-auto pb-4">
-          {data.columnOrder.map((columnId) => {
-            const column = data.columns[columnId];
-            const tasks = column.taskIds.map((taskId) => data.tasks[taskId]);
+          {(data.columnOrder || []).map((columnId) => {
+            const column = data.columns?.[columnId];
+            if (!column) return null;
+            const tasks = (column.taskIds || []).map((taskId) => data.tasks?.[taskId]).filter(Boolean);
 
             return (
               <div key={column.id} className="min-w-[320px] w-[320px] flex flex-col">
@@ -118,6 +122,7 @@ export default function KanbanBoard() {
                           task={task}
                           index={index}
                           onEdit={handleOpenEdit}
+                          onDelete={() => deleteTask(task.id)}
                         />
                       ))}
                       {provided.placeholder}

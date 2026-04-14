@@ -1,62 +1,66 @@
-import { createContext, useContext, useEffect, useState } from "react";
-//taskContext
-const initialData = {
-  tasks: {
-    "task-1": {
-      id: "task-1",
-      title: "Explore Task Manager",
-      description: "Welcome to your new modern Task Manager! Try dragging me to another column.",
-      priority: "High",
-      dueDate: new Date().toISOString(),
-      tags: ["welcome", "onboarding"]
-    },
-    "task-2": {
-      id: "task-2",
-      title: "Customize Settings",
-      description: "Toggle Dark/Light mode from the Top Navbar.",
-      priority: "Medium",
-      dueDate: new Date(Date.now() + 86400000).toISOString(),
-      tags: ["settings"]
-    }
-  },
-  columns: {
-    todo: {
-      id: "todo",
-      title: "To Do",
-      taskIds: ["task-1", "task-2"],
-    },
-    "in-progress": {
-      id: "in-progress",
-      title: "In Progress",
-      taskIds: [],
-    },
-    completed: {
-      id: "completed",
-      title: "Done",
-      taskIds: [],
-    },
-  },
-  columnOrder: ["todo", "in-progress", "completed"],
-};
+import { createContext, useContext, useEffect, useState, useRef } from "react";
+import { useAuth } from "./AuthContext";
 
 const TaskContext = createContext();
 
 export function TaskProvider({ children }) {
-  const [data, setData] = useState(() => {
-    const saved = localStorage.getItem("task-manager-data");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return initialData;
-      }
-    }
-    return initialData;
-  });
+  const { token, user } = useAuth();
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const isInitialMount = useRef(true);
 
+  // Fetch initial data from server
   useEffect(() => {
-    localStorage.setItem("task-manager-data", JSON.stringify(data));
-  }, [data]);
+    const fetchBoard = async () => {
+      if (!token || !user) {
+         setData(null);
+         setIsLoading(false);
+         return;
+      }
+      try {
+        setIsLoading(true);
+        const res = await fetch("/api/board", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const boardData = await res.json();
+          setData(boardData);
+          isInitialMount.current = true; // reset mount flag when new user dataloads
+        }
+      } catch(err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBoard();
+  }, [token, user]);
+
+  // Sync data to server on change
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (!token || !data) return;
+
+    const syncTimer = setTimeout(async () => {
+      try {
+        await fetch("/api/board", {
+          method: "PUT",
+          headers: {
+             "Authorization": `Bearer ${token}`,
+             "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ boardData: data })
+        });
+      } catch (err) {
+        console.error("Failed to sync board data", err);
+      }
+    }, 500); // debounce API calls by 500ms
+
+    return () => clearTimeout(syncTimer);
+  }, [data, token]);
 
   const addTask = (title, description, priority, dueDate, tags, status = "todo") => {
     const newTaskId = `task-${Date.now()}`;
@@ -70,6 +74,7 @@ export function TaskProvider({ children }) {
     };
 
     setData((prev) => {
+      if(!prev) return prev;
       const newTasks = { ...prev.tasks, [newTaskId]: newTask };
       const column = prev.columns[status];
       const newTaskIds = Array.from(column.taskIds);
@@ -90,6 +95,7 @@ export function TaskProvider({ children }) {
 
   const updateTask = (id, updatedFields) => {
     setData((prev) => {
+      if(!prev) return prev;
       const task = prev.tasks[id];
       if (!task) return prev;
       return {
@@ -104,6 +110,7 @@ export function TaskProvider({ children }) {
 
   const deleteTask = (id) => {
     setData((prev) => {
+      if(!prev) return prev;
       const newTasks = { ...prev.tasks };
       delete newTasks[id];
 
@@ -126,6 +133,7 @@ export function TaskProvider({ children }) {
 
   const moveTask = (sourceId, destinationId, sourceIndex, destinationIndex, draggableId) => {
     setData((prev) => {
+      if(!prev) return prev;
       const startColumn = prev.columns[sourceId];
       const finishColumn = prev.columns[destinationId];
 
@@ -177,6 +185,8 @@ export function TaskProvider({ children }) {
 
   const value = {
     data,
+    setData,
+    isLoading,
     addTask,
     updateTask,
     deleteTask,

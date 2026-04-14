@@ -1,12 +1,15 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CheckSquare, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, CheckSquare, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "../context/AuthContext";
 
 export default function Sidebar() {
+  const { logout } = useAuth();
+  
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: "Kanban Board", path: "/tasks", icon: <CheckSquare className="w-5 h-5" /> },
-    { name: "Settings", path: "/settings", icon: <Settings className="w-5 h-5" /> },
+    { name: "Settings", path: "/settings", icon: <SettingsIcon className="w-5 h-5" /> },
   ];
 
   return (
@@ -53,7 +56,10 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-white/10">
-        <button className="flex items-center space-x-3 text-muted-foreground hover:text-destructive transition-colors px-4 py-3 w-full rounded-xl hover:bg-destructive/10">
+        <button 
+          onClick={logout}
+          className="flex items-center space-x-3 text-muted-foreground hover:text-destructive transition-colors px-4 py-3 w-full rounded-xl hover:bg-destructive/10"
+        >
           <LogOut className="w-5 h-5" />
           <span>Logout</span>
         </button>

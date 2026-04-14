@@ -1,8 +1,8 @@
 import { Draggable } from "@hello-pangea/dnd";
-import { Clock, Tag, MoreVertical, MessageSquare, Paperclip, CheckSquare } from "lucide-react";
+import { Clock, Tag, Edit2, Trash2, MessageSquare, Paperclip, CheckSquare } from "lucide-react";
 import { format } from "date-fns";
 
-export default function TaskCard({ task, index, onEdit }) {
+export default function TaskCard({ task, index, onEdit, onDelete }) {
   const isOverdue = new Date(task.dueDate) < new Date();
 
   const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0;
@@ -44,12 +44,23 @@ export default function TaskCard({ task, index, onEdit }) {
               >
                 {task.priority}
               </span>
-              <button 
-                onClick={() => onEdit(task)}
-                className="p-1 text-muted-foreground hover:bg-black/10 dark:hover:bg-white/10 rounded-md opacity-0 group-hover:opacity-100 transition-all hover:text-foreground"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </button>
+              
+              <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-all">
+                <button 
+                  onClick={() => onEdit(task)}
+                  className="p-1.5 text-blue-500 hover:bg-blue-500/10 rounded-md transition-all"
+                  title="Edit task"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                  className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-md transition-all"
+                  title="Delete task"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
             <h3 className="font-semibold text-foreground mb-1.5 line-clamp-2 leading-snug">
