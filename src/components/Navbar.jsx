@@ -1,11 +1,13 @@
 import { Search, Bell, Sun, Moon, Menu } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useTasks } from "../context/TaskContext";
 import { Link } from "react-router-dom";
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme();
   const { user } = useAuth();
+  const { searchQuery, setSearchQuery } = useTasks();
 
   return (
     <header className="h-16 border-b border-white/10 glass px-6 flex items-center justify-between sticky top-0 z-30">
@@ -21,6 +23,8 @@ export default function Navbar() {
           type="text" 
           placeholder="Search tasks..." 
           className="bg-transparent border-none outline-none text-sm w-full placeholder:text-muted-foreground"
+          value={searchQuery || ""}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 

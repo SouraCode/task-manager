@@ -7,6 +7,7 @@ export function TaskProvider({ children }) {
   const { token, user } = useAuth();
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const isInitialMount = useRef(true);
 
   // Fetch initial data from server
@@ -131,6 +132,58 @@ export function TaskProvider({ children }) {
     });
   };
 
+  const addColumn = (title) => {
+    const newColId = `col-${Date.now()}`;
+    setData((prev) => {
+      if(!prev) return prev;
+      return {
+        ...prev,
+        columns: {
+          ...prev.columns,
+          [newColId]: { id: newColId, title, taskIds: [] }
+        },
+        columnOrder: [...prev.columnOrder, newColId]
+      };
+    });
+  };
+
+  const renameColumn = (id, newTitle) => {
+    setData((prev) => {
+      if(!prev) return prev;
+      return {
+        ...prev,
+        columns: {
+          ...prev.columns,
+          [id]: { ...prev.columns[id], title: newTitle }
+        }
+      };
+    });
+  };
+
+  const deleteColumn = (id) => {
+    setData((prev) => {
+      if(!prev) return prev;
+      
+      const colTasks = prev.columns[id]?.taskIds || [];
+      const newTasks = { ...prev.tasks };
+      colTasks.forEach(taskId => {
+        delete newTasks[taskId];
+      });
+
+      const newColumns = { ...prev.columns };
+      delete newColumns[id];
+      
+      const newColumnOrder = prev.columnOrder.filter(colId => colId !== id);
+      
+      return {
+        ...prev,
+        tasks: newTasks,
+        columns: newColumns,
+        columnOrder: newColumnOrder
+      };
+    });
+  };
+
   const moveTask = (sourceId, destinationId, sourceIndex, destinationIndex, draggableId) => {
     setData((prev) => {
       if(!prev) return prev;
@@ -187,10 +240,15 @@ export function TaskProvider({ children }) {
     data,
     setData,
     isLoading,
+    searchQuery,
+    setSearchQuery,
     addTask,
     updateTask,
     deleteTask,
-    moveTask
+    moveTask,
+    addColumn,
+    renameColumn,
+    deleteColumn
   };
 
   return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;
