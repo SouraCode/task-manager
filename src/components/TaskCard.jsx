@@ -1,13 +1,17 @@
 import { Draggable } from "@hello-pangea/dnd";
-import { Clock, Tag, Edit2, Trash2, MessageSquare, Paperclip, CheckSquare } from "lucide-react";
+import { Clock, Tag, Edit2, Trash2, MessageSquare, Paperclip, CheckSquare, Timer } from "lucide-react";
 import { format } from "date-fns";
 
 export default function TaskCard({ task, index, onEdit, onDelete }) {
-  const isOverdue = new Date(task.dueDate) < new Date();
+  const isOverdue = new Date(task.dueDate) < new Date() &&
+    // Don't show overdue for completed column (handled by parent filtering)
+    true;
 
   const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
   const progressPercent = totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) * 100 : 0;
+
+  const hasTimeData = task.estimatedHours;
 
   return (
     <Draggable draggableId={task.id} index={index}>
@@ -21,6 +25,14 @@ export default function TaskCard({ task, index, onEdit, onDelete }) {
           }`}
           style={provided.draggableProps.style}
         >
+          {/* Color label stripe */}
+          {task.colorLabel && (
+            <div
+              className="h-1 w-full shrink-0"
+              style={{ backgroundColor: task.colorLabel }}
+            />
+          )}
+
           {task.coverImage && (
             <div className="w-full h-32 overflow-hidden border-b border-white/5 shrink-0 bg-muted/20">
               <img 
@@ -70,8 +82,9 @@ export default function TaskCard({ task, index, onEdit, onDelete }) {
               {task.description}
             </p>
 
+            {/* Subtask progress */}
             {totalSubtasks > 0 && (
-              <div className="mb-5">
+              <div className="mb-4">
                 <div className="flex justify-between text-[10px] text-muted-foreground font-semibold mb-2 flex-row items-center">
                   <div className="flex items-center space-x-1.5 text-foreground/70">
                     <CheckSquare className="w-3.5 h-3.5" />
@@ -85,6 +98,14 @@ export default function TaskCard({ task, index, onEdit, onDelete }) {
                     style={{ width: `${progressPercent}%` }} 
                   />
                 </div>
+              </div>
+            )}
+
+            {/* Time estimation */}
+            {hasTimeData && (
+              <div className="mb-3 flex items-center gap-1.5 text-[11px] text-muted-foreground bg-black/5 dark:bg-white/5 rounded-lg px-2.5 py-1.5">
+                <Timer className="w-3 h-3 text-primary/70" />
+                <span>Est. <b className="text-foreground">{task.estimatedHours}h</b></span>
               </div>
             )}
 

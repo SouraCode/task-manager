@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CheckSquare, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { LayoutDashboard, CheckSquare, Settings as SettingsIcon, LogOut, CalendarDays, Target } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 
@@ -9,6 +9,8 @@ export default function Sidebar() {
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: "Kanban Board", path: "/tasks", icon: <CheckSquare className="w-5 h-5" /> },
+    { name: "Calendar", path: "/calendar", icon: <CalendarDays className="w-5 h-5" /> },
+    { name: "Focus Mode", path: "/focus", icon: <Target className="w-5 h-5" /> },
     { name: "Settings", path: "/settings", icon: <SettingsIcon className="w-5 h-5" /> },
   ];
 

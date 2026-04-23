@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Clock, Palette } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const COLOR_LABELS = [
+  { value: '', label: 'None' },
+  { value: '#ef4444', label: 'Red' },
+  { value: '#f97316', label: 'Orange' },
+  { value: '#eab308', label: 'Yellow' },
+  { value: '#22c55e', label: 'Green' },
+  { value: '#3b82f6', label: 'Blue' },
+  { value: '#a855f7', label: 'Purple' },
+];
 
 export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }) {
   const [title, setTitle] = useState("");
@@ -12,6 +22,8 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
   const [subtasks, setSubtasks] = useState([]);
   const [newSubtask, setNewSubtask] = useState("");
   const [assignee, setAssignee] = useState(null);
+  const [colorLabel, setColorLabel] = useState("");
+  const [estimatedHours, setEstimatedHours] = useState("");
 
   useEffect(() => {
     if (taskToEdit) {
@@ -23,6 +35,8 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
       setCoverImage(taskToEdit.coverImage || "");
       setSubtasks(taskToEdit.subtasks || []);
       setAssignee(taskToEdit.assignee || null);
+      setColorLabel(taskToEdit.colorLabel || "");
+      setEstimatedHours(taskToEdit.estimatedHours ? String(taskToEdit.estimatedHours) : "");
     } else {
       setTitle("");
       setDescription("");
@@ -33,6 +47,8 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
       setSubtasks([]);
       setAssignee(null);
       setNewSubtask("");
+      setColorLabel("");
+      setEstimatedHours("");
     }
   }, [taskToEdit, isOpen]);
 
@@ -53,7 +69,9 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
       tags: tagArray,
       coverImage,
       subtasks,
-      assignee
+      assignee,
+      colorLabel,
+      estimatedHours: estimatedHours ? parseFloat(estimatedHours) : null,
     });
     onClose();
   };
@@ -76,6 +94,11 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
               exit={{ scale: 0.95, opacity: 0 }}
               className="glass-card w-full max-w-lg p-6 rounded-2xl pointer-events-auto shadow-2xl border border-white/20 dark:border-white/10 max-h-[90vh] overflow-y-auto custom-scrollbar"
             >
+              {/* Color label accent bar */}
+              {colorLabel && (
+                <div className="h-1.5 w-full rounded-full mb-5" style={{ backgroundColor: colorLabel }} />
+              )}
+
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
                   {taskToEdit ? "Edit Task" : "New Task"}
@@ -90,6 +113,7 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Title */}
                 <div>
                   <label className="block text-sm font-medium mb-1 text-muted-foreground">Title</label>
                   <input
@@ -102,6 +126,7 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
                   />
                 </div>
 
+                {/* Description */}
                 <div>
                   <label className="block text-sm font-medium mb-1 text-muted-foreground">Description</label>
                   <textarea
@@ -113,6 +138,7 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
                   />
                 </div>
 
+                {/* Priority + Due Date */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1 text-muted-foreground">Priority</label>
@@ -138,6 +164,7 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
                   </div>
                 </div>
 
+                {/* Tags + Estimated Hours */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1 text-muted-foreground">Tags (comma separated)</label>
@@ -150,17 +177,55 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1 text-muted-foreground">Cover Image URL</label>
+                    <label className="block text-sm font-medium mb-1 text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" /> Est. Hours
+                    </label>
                     <input
-                      type="url"
-                      value={coverImage}
-                      onChange={(e) => setCoverImage(e.target.value)}
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={estimatedHours}
+                      onChange={(e) => setEstimatedHours(e.target.value)}
                       className="w-full bg-black/5 dark:bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                      placeholder="https://images.unsplash.com/..."
+                      placeholder="e.g. 2.5"
                     />
                   </div>
                 </div>
 
+                {/* Color Label */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-muted-foreground flex items-center gap-1">
+                    <Palette className="w-3.5 h-3.5" /> Color Label
+                  </label>
+                  <div className="flex gap-2">
+                    {COLOR_LABELS.map(c => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => setColorLabel(c.value)}
+                        title={c.label}
+                        className={`w-7 h-7 rounded-full border-2 transition-all ${
+                          colorLabel === c.value ? 'scale-125 border-foreground/50 shadow-md' : 'border-transparent hover:scale-110'
+                        }`}
+                        style={c.value ? { backgroundColor: c.value } : { background: 'linear-gradient(135deg, #ccc 50%, #fff 50%)', border: '2px solid #ccc' }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Cover Image URL */}
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-muted-foreground">Cover Image URL</label>
+                  <input
+                    type="url"
+                    value={coverImage}
+                    onChange={(e) => setCoverImage(e.target.value)}
+                    className="w-full bg-black/5 dark:bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    placeholder="https://images.unsplash.com/..."
+                  />
+                </div>
+
+                {/* Subtasks */}
                 <div>
                   <label className="block text-sm font-medium mb-1 text-muted-foreground">Subtasks</label>
                   {subtasks.length > 0 && (
@@ -223,7 +288,8 @@ export default function TaskModal({ isOpen, onClose, onSave, taskToEdit = null }
                   </div>
                 </div>
 
-                <div className="pt-4 flex justify-end space-x-3 mt-4 border-t border-black/5 dark:border-white/5 pt-4">
+                {/* Actions */}
+                <div className="pt-4 flex justify-end space-x-3 mt-4 border-t border-black/5 dark:border-white/5">
                   <button
                     type="button"
                     onClick={onClose}

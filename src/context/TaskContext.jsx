@@ -1,14 +1,18 @@
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useAuth } from "./AuthContext";
+import { useToast } from "./ToastContext";
+import { isBefore, parseISO } from "date-fns";
 
 const TaskContext = createContext();
 
 export function TaskProvider({ children }) {
   const { token, user } = useAuth();
+  const { addToast } = useToast();
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const isInitialMount = useRef(true);
+  const notifiedOverdue = useRef(false);
 
   // Fetch initial data from server
   useEffect(() => {
@@ -26,7 +30,8 @@ export function TaskProvider({ children }) {
         if (res.ok) {
           const boardData = await res.json();
           setData(boardData);
-          isInitialMount.current = true; // reset mount flag when new user dataloads
+          isInitialMount.current = true;
+          notifiedOverdue.current = false; // Reset for new load
         }
       } catch(err) {
         console.error(err);
@@ -36,6 +41,23 @@ export function TaskProvider({ children }) {
     };
     fetchBoard();
   }, [token, user]);
+
+  // Check for overdue tasks once data is loaded
+  useEffect(() => {
+    if (data && !notifiedOverdue.current) {
+      const tasks = Object.values(data.tasks || {});
+      const overdueCount = tasks.filter(t => 
+        t.dueDate && 
+        isBefore(parseISO(t.dueDate), new Date()) && 
+        !data.columns?.completed?.taskIds?.includes(t.id)
+      ).length;
+
+      if (overdueCount > 0) {
+        addToast(`You have ${overdueCount} overdue task${overdueCount > 1 ? 's' : ''}!`, 'overdue');
+        notifiedOverdue.current = true;
+      }
+    }
+  }, [data, addToast]);
 
   // Sync data to server on change
   useEffect(() => {
@@ -63,7 +85,7 @@ export function TaskProvider({ children }) {
     return () => clearTimeout(syncTimer);
   }, [data, token]);
 
-  const addTask = (title, description, priority, dueDate, tags, status = "todo") => {
+  const addTask = (title, description, priority, dueDate, tags, colorLabel = "", estimatedHours = null, coverImage = "", subtasks = [], status = "todo") => {
     const newTaskId = `task-${Date.now()}`;
     const newTask = {
       id: newTaskId,
@@ -71,13 +93,18 @@ export function TaskProvider({ children }) {
       description,
       priority,
       dueDate,
-      tags
+      tags,
+      colorLabel,
+      estimatedHours,
+      coverImage,
+      subtasks,
+      createdAt: new Date().toISOString()
     };
 
     setData((prev) => {
       if(!prev) return prev;
       const newTasks = { ...prev.tasks, [newTaskId]: newTask };
-      const column = prev.columns[status];
+      const column = prev.columns[status] || prev.columns["todo"];
       const newTaskIds = Array.from(column.taskIds);
       newTaskIds.unshift(newTaskId); // Add to top
 
